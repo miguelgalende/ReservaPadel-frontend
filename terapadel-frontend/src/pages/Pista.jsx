@@ -36,7 +36,7 @@ export default function Pista() {
 
   const times = pista.horario;
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pt-40">
       <h2 className="text-2xl font-bold mb-4">{pista.nombre_pista}</h2>
       <div className="mb-4">
         <label className="block text-sm text-gray-700 mb-1">Fecha</label>

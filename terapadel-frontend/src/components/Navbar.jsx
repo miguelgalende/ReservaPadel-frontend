@@ -114,9 +114,6 @@ export default function Navbar() {
                         <Link to="/home" className="hover:text-blue-200 transition-colors">
                             Inicio
                         </Link>
-                        <Link to="/pistas" className="hover:text-blue-200 transition-colors">
-                            Pistas
-                        </Link>
                         <Link to="/reservas" className="hover:text-blue-200 transition-colors">
                             Reservas
                         </Link>
@@ -155,9 +152,9 @@ export default function Navbar() {
                             <input
                                 type="email"
                                 placeholder="Correo electrónico"
-                                value={loginData.email}
+                                value={loginData.emailUsuario}
                                 onChange={(e) =>
-                                    setLoginData({ ...loginData, email: e.target.value })
+                                    setLoginData({ ...loginData, emailUsuario: e.target.value })
                                 }
                                 className="border rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
                                 required
@@ -166,9 +163,9 @@ export default function Navbar() {
                             <input
                                 type="password"
                                 placeholder="Contraseña"
-                                value={loginData.contraseña}
+                                value={loginData.contraseñaUsuario}
                                 onChange={(e) =>
-                                    setLoginData({ ...loginData, contraseña: e.target.value })
+                                    setLoginData({ ...loginData, contraseñaUsuario: e.target.value })
                                 }
                                 className="border rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
                                 required
