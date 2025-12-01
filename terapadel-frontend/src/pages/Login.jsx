@@ -4,9 +4,8 @@ import img2 from "../assets/padel2.png";
 import img3 from "../assets/padel3.png";
 import img4 from "../assets/padel4.png";
 
-export default function Init() {
-
-  const images = [img1, img2, img3, img4];  
+export default function Login() {
+  const images = [img1, img2, img3, img4];
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -19,7 +18,6 @@ export default function Init() {
 
   return (
     <main className="pt-24 relative flex flex-col items-center justify-center min-h-screen bg-black text-center overflow-hidden">
-
       <div className="relative w-full h-screen">
         {images.map((img, index) => (
           <img
