@@ -97,7 +97,7 @@ export default function Home() {
                         </div>
 
                         <button
-                          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-800"
+                          className="bg-blue-950 text-white px-3 py-1 rounded hover:bg-[#d7ff00] hover:text-black"
                           onClick={async () => {
                             const pistaCompleta = await getPista(p.idPista);
                             navigate("/pista", {

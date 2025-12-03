@@ -101,7 +101,7 @@ export default function Navbar() {
           <div className="flex gap-6">
             <button
               onClick={() => setShowLogin(true)}
-              className="bg-[#d7ff00] text-[#172554] font-semibold py-3 px-6 rounded-lg text-lg hover:bg-[#c0e000] transition-colors"
+              className="bg-[#d7ff00] text-black font-semibold py-3 px-6 rounded-lg text-lg hover:bg-[#c0e000] transition-colors"
             >
               Iniciar sesión
             </button>

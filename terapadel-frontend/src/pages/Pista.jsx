@@ -10,7 +10,7 @@ function HourButton({ time, busy, selected, onClick }) {
         busy
           ? "bg-red-200 text-red-800 cursor-not-allowed"
           : selected
-          ? "bg-green-600 text-white"
+          ? "bg-[#d7ff00] text-black"
           : "bg-white"
       }`}
       disabled={busy}
@@ -201,14 +201,14 @@ export default function Pista() {
       {/* BOTONES */}
       <div className="mt-6 flex gap-3">
         <button
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          className="bg-blue-950 text-white rounded px-4 py-2 hover:bg-[#d7ff00] hover:text-black"
           onClick={crearReserva}
         >
           Confirmar reserva
         </button>
 
         <button
-          className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+          className=" bg-gray-300 text-black rounded px-4 py-2 hover:bg-gray-400"
           onClick={() => setSelectedTimes([])}
         >
           Cancelar

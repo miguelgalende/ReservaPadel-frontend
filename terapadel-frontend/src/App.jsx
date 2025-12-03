@@ -6,6 +6,7 @@ import Reservas from "./pages/Reservas";
 import AdminPanel from "./pages/AdminPanel";
 import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
+import Footer from "./components/Footer";
 
 function PrivateAdminRoute({ children }) {
   const usuario = JSON.parse(localStorage.getItem("usuario"));
@@ -17,22 +18,25 @@ function PrivateAdminRoute({ children }) {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/pista" element={<Pista />} />
-        <Route path="/reservas" element={<Reservas />} />
-        <Route
-          path="/admin"
-          element={
-            <PrivateAdminRoute>
-              <AdminPanel />
-            </PrivateAdminRoute>
-          }
-        />
-      </Routes>
+      <div className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/pista" element={<Pista />} />
+          <Route path="/reservas" element={<Reservas />} />
+          <Route
+            path="/admin"
+            element={
+              <PrivateAdminRoute>
+                <AdminPanel />
+              </PrivateAdminRoute>
+            }
+          />
+        </Routes>
+      </div>
+      <Footer />
     </div>
   );
 }
