@@ -62,7 +62,24 @@ export async function crearReserva(data) {
   return await res.json();
 }
 
-export async function listarReservasUsuario(idUsuario) {
-  const res = await fetch(`${API_URL}/reservas/usuario/${idUsuario}`);
-  return await res.json();
-}
+export const listarReservasUsuario = async (idUsuario) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
+    `http://localhost:8090/api/reservas/usuario/${idUsuario}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Error al obtener reservas");
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+};

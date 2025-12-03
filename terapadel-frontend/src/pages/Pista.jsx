@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { getPista } from "../services/api";
 
 function HourButton({ time, busy, selected, onClick }) {
   return (
@@ -21,85 +22,133 @@ function HourButton({ time, busy, selected, onClick }) {
 
 export default function Pista() {
   const { state } = useLocation();
-  const pista = state?.pista;
+  const pistaProp = state?.pista;
 
+  const [pista, setPista] = useState(pistaProp || null);
   const [selectedTimes, setSelectedTimes] = useState([]);
   const [fecha, setFecha] = useState("");
 
   const usuario = JSON.parse(localStorage.getItem("usuario"));
   const token = localStorage.getItem("token");
 
-  if (!pista) {
-    return (
-      <div className="container mx-auto pt-60 text-center text-xl">
-        ❌ No se ha recibido información de la pista
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!pistaProp) {
+      getPista(state?.idPista).then(setPista);
+    }
+  }, [pistaProp, state]);
+
+  if (!pista) return <div className="pt-60 text-center">Cargando...</div>;
+
+  const horasOcupadas =
+    fecha && pista.ocupadasPorDia ? pista.ocupadasPorDia[fecha] || [] : [];
 
   const toggleTime = (time) => {
-    setSelectedTimes((prev) =>
-      prev.includes(time)
-        ? prev.filter((t) => t !== time)
-        : [...prev, time].slice(-3)
+    const times = pista.horario; // lista ordenada de horas
+    const index = times.indexOf(time);
+
+    // Si ya está seleccionado → deseleccionar y reiniciar selección
+    if (selectedTimes.includes(time)) {
+      setSelectedTimes([]);
+      return;
+    }
+
+    // Si no hay seleccionados → selecciona el primero
+    if (selectedTimes.length === 0) {
+      setSelectedTimes([time]);
+      return;
+    }
+
+    // Verifica consecutividad
+    const ordered = [...selectedTimes].sort(
+      (a, b) => times.indexOf(a) - times.indexOf(b)
     );
+    const firstIndex = times.indexOf(ordered[0]);
+    const lastIndex = times.indexOf(ordered[ordered.length - 1]);
+
+    // El nuevo debe estar justo antes o justo después
+    const esConsecutivo = index === lastIndex + 1 || index === firstIndex - 1;
+
+    if (!esConsecutivo) {
+      return alert("Solo puedes seleccionar horas consecutivas");
+    }
+
+    // Si ya hay 3 → no dejar agregar más
+    if (selectedTimes.length >= 3) {
+      return alert("Solo puedes seleccionar máximo 3 bloques");
+    }
+
+    // AÑADIR DE FORMA ORDENADA
+    const newSelection = [...selectedTimes, time].sort(
+      (a, b) => times.indexOf(a) - times.indexOf(b)
+    );
+
+    setSelectedTimes(newSelection);
   };
 
   const crearReserva = async () => {
-    if (!usuario) {
-      alert("Debes iniciar sesión para reservar");
-      return;
-    }
-
-    if (!fecha) {
-      alert("Selecciona una fecha");
-      return;
-    }
-
-    if (selectedTimes.length === 0) {
-      alert("Selecciona al menos una hora");
-      return;
-    }
+    if (!usuario) return alert("Debes iniciar sesión");
+    if (!fecha) return alert("Selecciona una fecha");
+    if (selectedTimes.length === 0)
+      return alert("Selecciona al menos una hora");
 
     const inicio = selectedTimes[0];
     const ultima = selectedTimes[selectedTimes.length - 1];
 
-    const [h, m] = ultima.split(":").map(Number);
-    const fechaFin = new Date(0, 0, 0, h, m + 30);
+    const [h, m] = ultima.split(":");
+    let minutoFinal = Number(m) + 30;
+    let horaFinal = Number(h);
+
+    if (minutoFinal >= 60) {
+      minutoFinal -= 60;
+      horaFinal++;
+    }
 
     const inicioReserva = `${fecha}T${inicio}:00`;
-    const finReserva = `${fecha}T${String(fechaFin.getHours()).padStart(
-      2,
-      "0"
-    )}:${String(fechaFin.getMinutes()).padStart(2, "0")}:00`;
+    const finReserva = `${fecha}T${String(horaFinal).padStart(2, "0")}:${String(
+      minutoFinal
+    ).padStart(2, "0")}:00`;
 
-    const reservaData = {
+    const data = {
       idPista: pista.idPista,
-      idUsuario: usuario._id,
+      idUsuario: usuario.idUsuario,
       inicioReserva,
       finReserva,
       estadoReserva: "ACTIVA",
     };
 
+    console.log("ENVIANDO:", data);
+
     try {
-      const response = await fetch("http://localhost:8090/api/reservas/crear", {
+      const res = await fetch("http://localhost:8090/api/reservas/crear", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + token,
         },
-        body: JSON.stringify(reservaData),
+        body: JSON.stringify(data),
       });
 
-      if (response.ok) {
-        alert("Reserva creada correctamente ✔");
-        setSelectedTimes([]);
-      } else {
-        alert("Error creando la reserva ❌");
+      if (!res.ok) {
+        const error = await res.text();
+        console.error("ERROR SERVIDOR:", error);
+        alert("La reserva no se pudo crear ❌");
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      alert("Error de conexión con el servidor ❌");
+
+      alert("Reserva creada ✔");
+      setSelectedTimes([]);
+
+      const nuevas = [...horasOcupadas, ...selectedTimes];
+      setPista((prev) => ({
+        ...prev,
+        ocupadasPorDia: {
+          ...prev.ocupadasPorDia,
+          [fecha]: nuevas,
+        },
+      }));
+    } catch (e) {
+      console.error(e);
+      alert("Error de conexión ❌");
     }
   };
 
@@ -114,31 +163,40 @@ export default function Pista() {
       />
 
       {/* FECHA */}
-      <div className="mb-4">
-        <label className="block text-sm text-gray-700 mb-1">Fecha</label>
-        <input
-          type="date"
-          className="border p-2 rounded"
-          min={new Date().toISOString().split("T")[0]}
-          value={fecha}
-          onChange={(e) => setFecha(e.target.value)}
-        />
-      </div>
+      <label className="block text-sm text-gray-700 mb-1">Fecha</label>
+      <input
+        type="date"
+        className="border p-2 rounded mb-6"
+        min={new Date().toISOString().split("T")[0]}
+        value={fecha}
+        onChange={(e) => {
+          setFecha(e.target.value);
+          setSelectedTimes([]);
+        }}
+      />
 
-      {/* HORARIO */}
-      <h3 className="text-lg font-semibold mb-2">Selecciona hora</h3>
+      {/* HORAS */}
+      {fecha ? (
+        <>
+          <h3 className="text-lg font-semibold mb-2">Selecciona hora</h3>
 
-      <div className="grid grid-cols-4 gap-2">
-        {pista.horario?.map((t) => (
-          <HourButton
-            key={t}
-            time={t}
-            busy={pista.ocupadas?.includes(t)}
-            selected={selectedTimes.includes(t)}
-            onClick={toggleTime}
-          />
-        ))}
-      </div>
+          <div className="grid grid-cols-4 gap-2">
+            {pista.horario.map((t) => (
+              <HourButton
+                key={t}
+                time={t}
+                busy={horasOcupadas.includes(t)}
+                selected={selectedTimes.includes(t)}
+                onClick={toggleTime}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="mt-4 text-gray-600">
+          Selecciona una fecha para ver horas
+        </p>
+      )}
 
       {/* BOTONES */}
       <div className="mt-6 flex gap-3">

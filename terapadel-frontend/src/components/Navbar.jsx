@@ -133,7 +133,7 @@ export default function Navbar() {
                   : "hover:bg-[#c0e000]  hover:text-black"
               }`}
             >
-              Reservas
+              Mis Reservas
             </Link>
 
             <Link
@@ -148,9 +148,8 @@ export default function Navbar() {
             </Link>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("usuario");
-                navigate("/");
+                localStorage.clear();
+                navigate("/", { replace: true });
               }}
               className="ml-4 bg-red-600 px-5 py-2 rounded-md hover:bg-red-700 transition-colors text-lg"
             >

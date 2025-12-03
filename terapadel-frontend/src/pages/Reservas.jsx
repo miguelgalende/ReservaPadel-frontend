@@ -1,49 +1,45 @@
 import React, { useEffect, useState } from "react";
-import CrearReserva from "../components/CrearReserva";
+import { listarReservasUsuario, getPista } from "../services/api";
 
-function Reservas() {
+export default function Reservas() {
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const usuario = JSON.parse(localStorage.getItem("usuario"));
+  const token = localStorage.getItem("token");
+  const esPasada = (fechaISO) => {
+    const ahora = new Date();
+    const fechaReserva = new Date(fechaISO);
+    return fechaReserva < ahora; // TRUE si ya ha pasado
+  };
 
   useEffect(() => {
-    const cargarReservas = async () => {
-      const token = localStorage.getItem("token");
-      if (!usuario) {
-        setLoading(false);
-        return;
-      }
+    if (!usuario) return;
 
+    const cargar = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:8090/api/reservas/usuario/${usuario._id}`,
-          {
-            headers: {
-              Authorization: "Bearer " + token,
-            },
-          }
+        const data = await listarReservasUsuario(usuario.idUsuario);
+
+        const completas = await Promise.all(
+          data.map(async (reserva) => {
+            const pista = await getPista(reserva.idPista);
+            return { ...reserva, pista };
+          })
         );
 
-        if (!response.ok) {
-          console.error("Error al cargar reservas");
-          return;
-        }
-
-        const data = await response.json();
-        setReservas(data);
-      } catch (error) {
-        console.error("Error de conexión:", error);
+        setReservas(completas);
+      } catch (err) {
+        console.error("Error cargando reservas:", err.message);
+        setReservas([]);
       } finally {
         setLoading(false);
       }
     };
 
-    cargarReservas();
+    cargar();
   }, [usuario]);
 
   const eliminarReserva = async (id) => {
-    const token = localStorage.getItem("token");
     if (!window.confirm("¿Seguro que quieres eliminar esta reserva?")) return;
 
     try {
@@ -51,85 +47,78 @@ function Reservas() {
         `http://localhost:8090/api/reservas/eliminar/${id}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: "Bearer " + token,
-          },
+          headers: { Authorization: "Bearer " + token },
         }
       );
 
       if (response.ok) {
-        setReservas(reservas.filter((r) => r.idReserva !== id));
+        setReservas((prev) => prev.filter((r) => r.idReserva !== id));
       }
-    } catch (error) {
-      console.error("Error eliminando reserva:", error);
+    } catch (err) {
+      console.error("Error eliminando:", err);
     }
   };
 
-  const agregarReserva = (reserva) => {
-    setReservas([...reservas, reserva]);
-  };
+  if (!usuario)
+    return (
+      <h2 className="text-center pt-60 text-xl">
+        Debes iniciar sesión para ver tus reservas.
+      </h2>
+    );
 
-  if (!usuario) {
-    return <h2 style={{ textAlign: "center" }}>Debes iniciar sesión</h2>;
-  }
-
-  if (loading) {
-    return <h2 style={{ textAlign: "center" }}>Cargando reservas...</h2>;
-  }
+  if (loading)
+    return <h2 className="text-center pt-60 text-xl">Cargando reservas...</h2>;
 
   return (
     <div className="container mx-auto px-4 py-8 pt-60">
       <h1 className="text-2xl font-bold mb-6">Mis Reservas</h1>
 
-      <CrearReserva onReservaCreada={agregarReserva} />
-
       {reservas.length === 0 ? (
-        <p>No tienes reservas registradas.</p>
+        <p>No tienes reservas realizadas.</p>
       ) : (
-        reservas.map((reserva) => (
-          <div
-            key={reserva.idReserva}
-            style={{
-              padding: "15px",
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              marginBottom: "15px",
-            }}
-          >
-            <p>
-              <strong>Pista:</strong> {reserva.idPista}
-            </p>
-            <p>
-              <strong>Inicio:</strong>{" "}
-              {new Date(reserva.inicioReserva).toLocaleString()}
-            </p>
-            <p>
-              <strong>Fin:</strong>{" "}
-              {new Date(reserva.finReserva).toLocaleString()}
-            </p>
-            <p>
-              <strong>Estado:</strong> {reserva.estadoReserva}
-            </p>
+        reservas.map((reserva) => {
+          const pasada = esPasada(reserva.inicioReserva);
 
-            <button
-              onClick={() => eliminarReserva(reserva.idReserva)}
-              style={{
-                backgroundColor: "red",
-                color: "white",
-                border: "none",
-                padding: "8px 12px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                marginTop: "10px",
-              }}
+          return (
+            <div
+              key={reserva.idReserva}
+              className="bg-white p-4 shadow rounded mb-4 flex gap-4"
             >
-              Eliminar reserva
-            </button>
-          </div>
-        ))
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold">
+                  {reserva.pista?.nombrePista}
+                </h2>
+
+                <p>
+                  <strong>Inicio:</strong>{" "}
+                  {new Date(reserva.inicioReserva).toLocaleString()}
+                </p>
+
+                <p>
+                  <strong>Fin:</strong>{" "}
+                  {new Date(reserva.finReserva).toLocaleString()}
+                </p>
+
+                <p>
+                  <strong>Estado:</strong> {reserva.estadoReserva}
+                </p>
+
+                <button
+                  onClick={() => !pasada && eliminarReserva(reserva.idReserva)}
+                  disabled={pasada}
+                  className={`px-4 py-2 rounded mt-3 ${
+                    pasada
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      : "bg-red-600 text-white hover:bg-red-700"
+                  }`}
+                >
+                  {pasada ? "Reserva pasada" : "Cancelar reserva"}
+                </button>
+              </div>
+            </div>
+          );
+        })
       )}
     </div>
   );
 }
-
-export default Reservas;
