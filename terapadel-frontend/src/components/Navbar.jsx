@@ -73,8 +73,18 @@ export default function Navbar() {
       );
 
       if (response.ok) {
+        setRegisterData({
+          nombreUsuario: "",
+          apellidosUsuario: "",
+          telefonoUsuario: "",
+          emailUsuario: "",
+          contraseñaUsuario: "",
+        });
+        const data = await response.json();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
         setShowRegister(false);
-        setMensaje("Usuario registrado correctamente ✅");
+        navigate("/home");
       } else {
         setMensaje("No se pudo registrar el usuario ❌");
       }
