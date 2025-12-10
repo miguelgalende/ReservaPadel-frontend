@@ -41,6 +41,10 @@ export default function Navbar() {
       console.log("Respuesta:", response.status);
 
       if (response.ok) {
+        setLoginData({
+          emailUsuario: "",
+          contraseñaUsuario: "",
+        });
         const data = await response.json();
         console.log("Login correcto:", data);
         localStorage.setItem("token", data.token);

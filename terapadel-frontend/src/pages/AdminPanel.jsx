@@ -40,6 +40,15 @@ export default function AdminPanel() {
 
   const handleCrearClub = async (e) => {
     e.preventDefault();
+    if (
+      !clubData.nombreClub.trim() ||
+      !clubData.direccionClub.trim() ||
+      !clubData.telefonoClub.trim() ||
+      !clubData.imagenClub.trim()
+    ) {
+      alert("Por favor, completa todos los campos antes de crear el club.");
+      return;
+    }
     await crearClub(clubData);
     setClubData({
       nombreClub: "",
@@ -52,6 +61,14 @@ export default function AdminPanel() {
 
   const handleCrearPista = async (e) => {
     e.preventDefault();
+    if (
+      !pistaData.nombrePista.trim() ||
+      !pistaData.idClub.trim() ||
+      !pistaData.imagenPista.trim()
+    ) {
+      alert("Por favor, completa todos los campos antes de crear la pista.");
+      return;
+    }
     await crearPista(pistaData);
     setPistaData({ nombrePista: "", idClub: "", imagenPista: "" });
     cargarPistas(pistaData.idClub);
@@ -65,18 +82,25 @@ export default function AdminPanel() {
   const borrarClub = async (id) => {
     if (!window.confirm("¿Seguro que quieres eliminar este club?")) return;
 
-    await eliminarClub(id);
-    setClubs(clubs.filter((club) => club.idPista !== id));
-    setPistas([]);
-    setClubSeleccionado(null);
+    try {
+      await eliminarClub(id);
+      setClubs((prev) => prev.filter((club) => club.idClub !== id));
+    } catch (err) {
+      console.error("Error eliminando club:", err);
+      alert("No se pudo eliminar el club");
+    }
   };
 
   const borrarPista = async (id) => {
     if (!window.confirm("¿Seguro que quieres eliminar esta pista?")) return;
 
-    await eliminarPista(id);
-
-    setPistas(pistas.filter((pista) => pista.idPista !== id));
+    try {
+      await eliminarPista(id);
+      setPistas((prev) => prev.filter((pista) => pista.idPista !== id));
+    } catch (err) {
+      console.error("Error eliminando pista:", err);
+      alert("No se pudo eliminar la pista");
+    }
   };
 
   return (
@@ -160,7 +184,7 @@ export default function AdminPanel() {
 
                   <button
                     className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                    onClick={() => borrarClub(club._id)}
+                    onClick={() => borrarClub(club.idClub)}
                   >
                     Eliminar
                   </button>

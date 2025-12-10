@@ -20,7 +20,14 @@ export async function eliminarClub(id) {
   const res = await fetch(`${API_URL}/clubs/eliminar/${id}`, {
     method: "DELETE",
   });
-  return await res.json();
+
+  if (!res.ok) throw new Error("Error al eliminar club");
+
+  try {
+    return await res.json();
+  } catch {
+    return { message: "Eliminado sin respuesta JSON" };
+  }
 }
 
 /*PISTAS*/
@@ -43,7 +50,17 @@ export async function eliminarPista(id) {
   const res = await fetch(`${API_URL}/pistas/eliminar/${id}`, {
     method: "DELETE",
   });
-  return await res.json();
+
+  if (!res.ok) {
+    const errorMessage = await res.text();
+    throw new Error(errorMessage || "Error al eliminar la pista");
+  }
+
+  try {
+    return await res.json();
+  } catch {
+    return { message: "Eliminado sin respuesta JSON" };
+  }
 }
 
 export async function getPista(id) {
